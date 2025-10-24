@@ -62,7 +62,7 @@ public class OrientationChange : MonoBehaviour
 #if UNITY_EDITOR
   private void Update()
   {
-    if (Input.GetKeyDown(KeyCode.K))
+    if (Input.GetKeyDown(KeyCode.Space))
     {
       SwitchDisplay(Screen.width + "," + Screen.height);  
     }
