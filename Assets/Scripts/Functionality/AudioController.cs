@@ -20,6 +20,17 @@ public class AudioController : MonoBehaviour
     [SerializeField] private AudioClip NormalBg_Audio;
     [SerializeField] private AudioClip BonusBg_Audio;
 
+    private bool isForceMuted = false;
+    private readonly Dictionary<AudioSource, bool> preFocusMuteState = new Dictionary<AudioSource, bool>();
+
+    private IEnumerable<AudioSource> AllSources()
+    {
+        yield return bg_adudio;
+        yield return audioPlayer_wl;
+        yield return audioPlayer_button;
+        yield return audioPlayer_Spin;
+    }
+
 // TODO: slot add button click on next prev
     private void Start()
     {
@@ -55,22 +66,32 @@ public class AudioController : MonoBehaviour
 
 
 
+    // Native/editor focus path — calls the SAME method the WebGL OnFocusChanged path calls (UIManager.OnFocusChanged).
     private void OnApplicationFocus(bool focus)
     {
-        if (!focus)
-        {
-            bg_adudio.Pause();
-            audioPlayer_wl.Pause();
-            audioPlayer_button.Pause();
-            audioPlayer_Spin.Pause();
-        }
-        else
-        {
-            if (!bg_adudio.mute) bg_adudio.UnPause();
-            if (!audioPlayer_wl.mute) audioPlayer_wl.UnPause();
-            if (!audioPlayer_button.mute) audioPlayer_button.UnPause();
-            if (!audioPlayer_Spin.mute) audioPlayer_Spin.UnPause();
+        SetMuteAll(!focus);
+    }
 
+    // Focus-driven — called from BOTH UIManager.OnFocusChanged (JS bridge) and OnApplicationFocus above.
+    // Reentrancy-guarded: a duplicate call for the same direction (both focus sources firing for one
+    // blur/focus event) is a no-op, so the second call can't clobber the first call's captured restore state.
+    internal void SetMuteAll(bool forceMute)
+    {
+        if (forceMute == isForceMuted) return;
+        isForceMuted = forceMute;
+
+        foreach (var source in AllSources())
+        {
+            if (source == null) continue;
+            if (forceMute)
+            {
+                preFocusMuteState[source] = source.mute;
+                source.mute = true;
+            }
+            else
+            {
+                source.mute = preFocusMuteState.TryGetValue(source, out bool prevMuted) ? prevMuted : source.mute;
+            }
         }
     }
 
@@ -153,27 +174,38 @@ public class AudioController : MonoBehaviour
     }
 
 
+    // User-toggle-driven — Sound/Music button callbacks (UIManager.ToggleSound/ToggleMusic).
+    // Always writes .mute directly (an explicit user interaction always wins over a stuck/stale
+    // forced-mute flag — see Check 3's "reverse invariant"). If a focus-mute is currently active,
+    // also updates the captured "restore to" value so a later legitimate focus-regain doesn't
+    // clobber the user's newer choice back to the stale pre-blur state.
     internal void ToggleMute(bool toggle, string type = "all")
     {
-
         switch (type)
         {
             case "bg":
-                bg_adudio.mute = toggle;
+                SetSourceMute(bg_adudio, toggle);
                 break;
             case "button":
-                audioPlayer_button.mute = toggle;
-                audioPlayer_Spin.mute = toggle;
+                SetSourceMute(audioPlayer_button, toggle);
+                SetSourceMute(audioPlayer_Spin, toggle);
                 break;
             case "wl":
-                audioPlayer_wl.mute = toggle;
+                SetSourceMute(audioPlayer_wl, toggle);
                 break;
             case "all":
-                audioPlayer_wl.mute = toggle;
-                bg_adudio.mute = toggle;
-                audioPlayer_button.mute = toggle;
+                SetSourceMute(audioPlayer_wl, toggle);
+                SetSourceMute(bg_adudio, toggle);
+                SetSourceMute(audioPlayer_button, toggle);
                 break;
         }
+    }
+
+    private void SetSourceMute(AudioSource source, bool toggle)
+    {
+        if (source == null) return;
+        source.mute = toggle;
+        if (isForceMuted) preFocusMuteState[source] = toggle;
     }
 
 }

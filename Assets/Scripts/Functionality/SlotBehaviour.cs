@@ -343,6 +343,17 @@ public class SlotBehaviour : MonoBehaviour
         if (Balance_text) Balance_text.text = SocketManager.PlayerData.balance.ToString("f3");
         if (TotalWin_text) TotalWin_text.text = SocketManager.ResultData.payload.winAmount.ToString("f3");
     }
+
+    // Called from SocketIOManager.OnBalanceSync — an out-of-band backend balance push.
+    // Snaps the display immediately (no tween — this isn't a spin-result animation) and
+    // re-runs the low-balance gate, since an external push can move the player across the
+    // spin-gate threshold outside of any spin flow.
+    internal void UpdateBalanceDisplay(double newBalance)
+    {
+        currentBalance = newBalance;
+        if (Balance_text) Balance_text.text = newBalance.ToString("F3");
+        CompareBalance();
+    }
     private IEnumerator FreeSpinCoroutine(int spinchances)
     {
         int i = 0;

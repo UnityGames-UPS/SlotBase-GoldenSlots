@@ -4726,6 +4726,7 @@ MonoBehaviour:
   GameExit_Button: {fileID: 702497084}
   slotManager: {fileID: 2046803210}
   socketManager: {fileID: 500036492}
+  jsFunctCalls: {fileID: 1481726372}
   m_AwakeGameButton: {fileID: 1755324899}
   RaycastBlocker: {fileID: 678678551}
 --- !u!1 &381314114
@@ -6714,8 +6715,8 @@ MonoBehaviour:
   uiManager: {fileID: 377874625}
   bonusController: {fileID: 65498559}
   JSManager: {fileID: 1481726372}
-  TestSocketURI: http://localhost:5000
-  testToken: 3e36750238ac41ea94be79f6e7674474
+  TestSocketURI: https://devrealtime.dingdinghouse.com/
+  testToken: a7a0cd9c166446f2927b6a861bc47250
 --- !u!1 &502968745
 GameObject:
   m_ObjectHideFlags: 0
@@ -36436,9 +36437,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   UIWrapper: {fileID: 1485219722}
   CanvasScaler: {fileID: 51930702}
-  MatchWidth: 0
-  MatchHeight: 1
-  PortraitMatchWandH: 0.5
   transitionDuration: 0.2
   waitForRotation: 0.2
 --- !u!1 &6770202590578165148
